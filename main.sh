@@ -16,7 +16,7 @@ window_list_format=$(get_tmux_option "@tmux2k-window-list-format" '#I:#W')
 window_list_flags=$(get_tmux_option "@tmux2k-window-list-flags" true)
 window_list_compact=$(get_tmux_option "@tmux2k-window-list-compact" false)
 IFS=' ' read -r -a lplugins <<<"$(get_tmux_option '@tmux2k-left-plugins' 'session git cwd')"
-IFS=' ' read -r -a rplugins <<<"$(get_tmux_option '@tmux2k-right-plugins' 'cpu ram battery network time')"
+IFS=' ' read -r -a rplugins <<<"$(get_tmux_option '@tmux2k-right-plugins' 'cpu ram network time')"
 theme=$(get_tmux_option "@tmux2k-theme" 'default')
 icons_only=$(get_tmux_option "@tmux2k-icons-only" false)
 
@@ -61,6 +61,7 @@ declare -A plugin_colors=(
     ["docker"]="light_blue text"
     ["git"]="green text"
     ["gpu"]="red text"
+    ["group"]="light_green text"
     ["network"]="purple text"
     ["ping"]="purple text"
     ["pomodoro"]="red text"
@@ -240,9 +241,7 @@ set_theme() {
     message_bg=$(get_tmux_option "@tmux2k-message-bg" "$blue")
     message_fg=$(get_tmux_option "@tmux2k-message-fg" "$black")
     pane_active_border=$(get_tmux_option "@tmux2k-pane-active-border" "$blue")
-    pane_active_border_bg=$(get_tmux_option "@tmux2k-pane-active-border-bg" "$bg_main")
     pane_border=$(get_tmux_option "@tmux2k-pane-border" "$gray")
-    pane_border_bg=$(get_tmux_option "@tmux2k-pane-border_bg" "$bg_main")
     prefix_highlight=$(get_tmux_option "@tmux2k-prefix-highlight" "$blue")
 }
 
@@ -255,8 +254,8 @@ set_options() {
 
     tmux set-option -g status-style "bg=${bg_main},fg=${text}"
     tmux set-option -g message-style "bg=${message_bg},fg=${message_fg}"
-    tmux set-option -g pane-active-border-style "bg=${pane_active_border_bg},fg=${pane_active_border}"
-    tmux set-option -g pane-border-style "bg=${pane_border_bg},fg=${pane_border}"
+    tmux set-option -g pane-active-border-style "bg=${bg_main},fg=${pane_active_border},bold"
+    tmux set-option -g pane-border-style "fg=${pane_border}"
 
     tmux set -g status-justify "$window_list_alignment"
     tmux set-window-option -g window-status-activity-style "bold"
@@ -276,10 +275,6 @@ status_bar() {
         plugin="${plugins[$plugin_index]}"
         IFS=' ' read -r -a colors <<<"$(get_plugin_colors "$plugin")"
         script="#($current_dir/plugins/$plugin.sh)"
-
-        if [[ "$plugin" =~ ^group([0-9]+)$ ]]; then
-            script="#(GROUP_NUM=${BASH_REMATCH[1]} $current_dir/plugins/group.sh)"
-        fi
 
         if [ "$side" == "left" ]; then
             if $show_powerline; then
@@ -344,7 +339,12 @@ window_list() {
             "#[fg=${bg_alt},bg=${wbg}]${wl_sep}#[bg=${bg_alt}]${flags}#[fg=${white}]${spacer}${window_list_format}${spacer}#[fg=${bg_alt},bg=${wbg}]${wr_sep}"
     else
         tmux set-window-option -g window-status-current-format "#[fg=${wbg},bg=${wfg}] ${window_list_format}${spacer}${current_flags} "
-        tmux set-window-option -g window-status-format "#[fg=${white},bg=${bg_main}] ${window_list_format}${spacer}${flags} "
+        tmux set-window-option -g window-status-format "#[fg=${white},bg=${bg_alt}] ${window_list_format}${spacer}${flags} "
+    fi
+
+    if $icons_only; then
+        tmux set-window-option -g window-status-current-format "#[fg=${wbg},bg=${wfg}]${spacer}${window_list_format}${spacer}"
+        tmux set-window-option -g window-status-format "#[fg=${white},bg=${wfg}]${spacer}${window_list_format}${spacer}"
     fi
 }
 

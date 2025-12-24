@@ -6,16 +6,13 @@ current_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$current_dir/../lib/utils.sh"
 
 main() {
-    group_num="${GROUP_NUM:-1}"
-
-    scripts=$(get_tmux_option "@tmux2k-group${group_num}-plugins" "cpu ram")
-    delimiter=$(get_tmux_option "@tmux2k-group${group_num}-delimiter" "")
-
+    scripts=$(get_tmux_option "@tmux2k-group-plugins" "cpu ram uptime")
+    delimiter=$(get_tmux_option "@tmux2k-group-delimiter" "")
     val=""
     for script in $scripts; do
         sname="${current_dir}/${script}.sh"
         val+="$($sname)"
-        val+="${delimiter:- }"
+        val+=$delimiter
     done
     size=${#val}
     let "size = size-1"
